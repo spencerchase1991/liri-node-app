@@ -13,7 +13,7 @@ This is a project where we are learning to implement node.js.
 node liri.js spotify-this-song <insert song title>
 This will show the following information about the song in your terminal/bash window
   
-  ..* •	Artist(s)
+  - •	Artist(s)
   ..* •	The song's name
   ..* •	A preview link of the song from Spotify
   ..* •	The album that the song is from
