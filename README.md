@@ -16,6 +16,8 @@ This will search the Bands in Town Artist Events API for an artist and render th
 - Venue location
 - Date of the Event (use moment to format this as "MM/DD/YYYY")
 
+![concert-this (2)](https://user-images.githubusercontent.com/47365435/57953549-9a9a7580-78ad-11e9-86c3-c8a4e77cc64f.PNG)
+
 #### Spotify
 
 node liri.js spotify-this-song <insert song title>
@@ -44,3 +46,16 @@ This will output the following information to your terminal/bash window:
 node liri.js do-what-it-says
 Using the fs Node package, LIRI will take the text inside of random.txt and then use it to call one of LIRI's commands.
 Right now it will run spotify-this-song for "I Want It That Way".
+
+#### Packages Used
+
+- Node-Spotify-API
+- Axios
+- OMDB API 
+- Bands In Town API
+- Moment
+- DotEnv
+
+#### Logged Data
+
+output data to a .txt file.
