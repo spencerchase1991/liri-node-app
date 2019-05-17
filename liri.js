@@ -1,240 +1,140 @@
 require("dotenv").config();
 
+var request = require("request");
+
 var keys = require("./keys.js");
 
-var inquirer = require("inquirer");
-
-var axios = require("axios");
-
-var moment = require("moment");
+var Spotify = require('node-spotify-api');
 
 var fs = require("fs");
 
-var Spotify = require("node-spotify-api");
+var moment = require("moment");
+
 var spotify = new Spotify(keys.spotify);
 
-function startingPrompt() {
-	inquirer.prompt([
-		{
-			type: "list",
-			message: "Which feature would you like to use?",
-			choices: ["concert-this", "spotify-this-song", "movie-this", "do-what-it-says"],
-			name: "command"
-
-		}
-	]).then(function (response) {
-
-		if (response.command === "concert-this") {
-			searchConcert(false, null);
-		}
-		else if (response.command === "spotify-this-song") {
-			searchSpotify(false, null);
-		}
-		else if (response.command === "movie-this") {
-			searchMovie(false, null);
-		}
-		else if (response.command === "do-what-it-says") {
-			doWhat();
-		}
-	});
+var liri_bot = {
+  cmd: process.argv[2],
+  arg: process.argv.slice(3).join("+"),
+  textFile: "log.txt",
+  switchCmd: function() {
+    switch (liri_bot.cmd) {
+      case 'concert-this':
+        this.concertThis(liri_bot.arg);
+        break;
+      case 'spotify-this-song':
+        this.spotifyThis(liri_bot.arg);
+        break;
+      case 'movie-this':
+        this.movieThis(liri_bot.arg);
+        break;
+      case 'do-what-it-says':
+        this.doWhatItSays();
+        break;
+      default:
+        console.log("Please use a valid command.")
+        return;
+      }
+	},
+	
+    concertThis: function() {
+      var artist = this.arg;
+      var queryUrl = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
+      request(queryUrl, function(error, response, body) {
+        if (!error && response.statusCode === 200) {
+          body = JSON.parse(body);
+          for (var event in body) {
+            liri_bot.display("Venue: ", body[event].venue.name);
+            liri_bot.display("Location: ", body[event].venue.city + ", " + body[event].venue.region + ", " + body[event].venue.country);
+            var m = moment(body[event].datetime).format('MM/DD/YYYY, h:mm a').split(", ");
+            liri_bot.display("Date: ", m[0]);
+            liri_bot.display("Time: ", m[1]);
+            liri_bot.contentAdded();
+          }
+        }
+      });
+	},
+	
+    spotifyThis: function(){
+      var song = this.arg;
+      if (!song) {
+        song = "The+Sign";
+        console.log(song);
+      }
+      spotify.search({
+        type: 'track',
+        query: song
+      }, function(err, data) {
+        if (err) {
+          return console.log('Error occurred: ' + err);
+        }
+        data = data.tracks.items[0];
+        // console.log(data);
+        liri_bot.display("Artist(s) Name: ", data.artists[0].name);
+        liri_bot.display("Track Name: ", data.name);
+        liri_bot.display("Preview URL: ", data.preview_url);
+        liri_bot.display("Album: ", data.album.name);
+        liri_bot.contentAdded();
+      });
+	},
+	
+    movieThis: function(){
+      var movieName = this.arg;
+      if (!movieName) {
+        movieName = "Mr.+Nobody"
+      };
+      var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
+      request(queryUrl, function(error, response, body) {
+        if (!error && response.statusCode === 200) {
+          body = JSON.parse(body);
+          liri_bot.display("Title: ", body.Title);
+          liri_bot.display("Year: ", body.Year);
+          liri_bot.display("IMDB Rating: ", body.imdbRating);
+          if (body.Ratings[2]) {
+            liri_bot.display("Rotten Tomatoes Score: ", body.Ratings[2].Value);
+          }
+          liri_bot.display("Country: ", body.Country);
+          liri_bot.display("Language: ", body.Language);
+          liri_bot.display("Plot: ", body.Plot);
+          liri_bot.display("Actors: ", body.Actors);
+          liri_bot.contentAdded();
+        }
+      });
+	},
+	
+    doWhatItSays: function(){
+      fs.readFile("random.txt", "utf8", function(error, data) {
+        if (error) {
+          return console.log(error);
+        }
+        var dataArr = data.replace(/(\r\n|\n|\r)/gm, "").split(",");
+        for (var i = 0; i < dataArr.length; i += 2) {
+          liri_bot.cmd = dataArr[i];
+          liri_bot.arg = dataArr[i + 1].replace(/['"]+/g, '').split(' ').join("+");
+          liri_bot.switchCmd();
+        }
+      });
+	},
+	
+    display: function(description, data){
+      console.log(description + data);
+      this.appendFile(description + data + "\n");
+    },
+    appendFile: function(file) {
+      fs.appendFile(this.textFile, file, function(err) {
+        if (err) {
+          console.log(err);
+        }
+        else {
+          console.log("Content Added!");
+        }
+      });
+	},
+	
+    contentAdded: function(){
+      console.log("");
+      console.log("Content Added!");
+      console.log("-----------------------------------");
+      this.appendFile("-----------------------------------\n");
+    }
 }
-
-console.log("do what it says")
-
-function confirmationPrompt() {
-	inquirer.prompt([
-		{
-			type: "confirm",
-			message: "Would you like to make another search? ",
-			name: "confirm",
-			default: false
-		}
-	]).then(function (response) {
-		if (response.confirm) {
-			startingPrompt();
-		}
-		else {
-			return;
-		}
-	});
-}
-
-function doWhat() {
-	fs.readFile("random.txt", "utf8", function (error, data) {
-		if (error) {
-			return console.log(error);
-		}
-
-		var dataArr = data.split(",");
-
-		switch (dataArr[0]) {
-			case "concert-this":
-				searchConcert(true, dataArr[1]);
-				break;
-
-			case "spotify-this-song":
-				searchSpotify(true, dataArr[1]);
-				break;
-
-			case "movie-this":
-				searchMovie(true, dataArr[1]);
-				break;
-
-			default:
-				break;
-		}
-	});
-}
-
-function searchConcert(hasVal, value) {
-
-	if (hasVal) {
-		search("Concert", value);
-	}
-	else {
-		inquirer.prompt([
-			{
-				type: "input",
-				message: "What artist would you like to search for? ",
-				name: "artist"
-			}
-		]).then(function (response) {
-			search("Concert", response.artist);
-		});
-	};
-};
-
-function searchSpotify(hasVal, value) {
-
-	if (hasVal) {
-		search("Spotify", value);
-	}
-	else {
-		inquirer.prompt([
-			{
-				type: "input",
-				message: "What song would you like to search for? ",
-				name: "artist"
-			}
-		]).then(function (response) {
-			search("Spotify", response.artist)
-		});
-	};
-}
-
-function searchMovie(hasVal, value) {
-
-	if (hasVal) {
-		search("Movie", value);
-	}
-	else {
-		inquirer.prompt([
-			{
-				type: "input",
-				message: "What movie would you like to search for? ",
-				name: "movie"
-			}
-		]).then(function (response) {
-			search("Movie", response.movie)
-		});
-	}
-}
-
-function search(type, value) {
-
-	var divider = "\n\r-----------------------------------------------------------\n\r";
-
-	switch (type) {
-		case "Concert":
-			var url = "https://rest.bandsintown.com/artists/" + value + "/events?app_id=codingbootcamp";
-			axios.get(url).then(function (axiosResponse) {
-
-				console.log(divider);
-
-				for (var i = 0; i < axiosResponse.data.length; i++) {
-
-					var showData = [
-						"Venue Name: " + axiosResponse.data[i].venue.name,
-						"venue Location: " + axiosResponse.data[i].venue.city + ", " + axiosResponse.data[i].venue.country,
-						"Date of Event: " + moment(axiosResponse.data[i].datetime).format("MM/DD/YYYY"),
-					].join("\n");
-
-					console.log(showData);
-					console.log(divider);
-				}
-
-				writeLog(showData, divider);
-				confirmationPrompt();
-			});
-			break;
-
-		case "Spotify":
-			spotify.search({ type: 'track', query: value }, function (err, data) {
-				if (err) {
-					return console.log('Error occurred: ' + err);
-				}
-
-				console.log(divider);
-
-				for (var i = 0; i < data.tracks.items.length; i++) {
-
-					var showData = [
-						"Artist: " + data.tracks.items[i].artists[0].name,
-						"Track Name: " + data.tracks.items[i].name,
-						"Spotify Link: " + data.tracks.items[i].external_urls.spotify,
-						"Album: " + data.tracks.items[i].album.name
-					].join('\n');
-
-					console.log(showData);
-					console.log(divider);
-				}
-
-				writeLog(showData, divider);
-				confirmationPrompt();
-			});
-			break;
-
-		case "Movie":
-			var movie = value.replace(" ", "+");
-
-			var url = "http://www.omdbapi.com/?t=" + movie + "&y=&plot=full&apikey=trilogy";
-			axios.get(url).then(function (axiosResponse) {
-
-				console.log(divider);
-
-				var showData = [
-					"Title: " + axiosResponse.data.Title,
-					"Release Year: " + axiosResponse.data.Year,
-					"IMDB Rating: " + axiosResponse.data.Ratings[0].value,
-					"Rotten Tomatoes Rating: " + axiosResponse.data.Ratings[1].value,
-					"Country Produced: " + axiosResponse.data.Country,
-					"Language : " + axiosResponse.data.Language,
-					"Actors: " + axiosResponse.data.Actors,
-					divider,
-					axiosResponse.data.Plot
-				].join('\n');
-
-				console.log(showData);
-				console.log(divider);
-
-				writeLog(showData, divider);
-				confirmationPrompt();
-			});
-			break;
-		default:
-			break;
-	};
-
-}
-
-function writeLog(data, divider) {
-	fs.appendFile("log.txt", data + divider, function (err) {
-
-		// If the code experiences any errors it will log the error to the console.
-		if (err) {
-			return console.log(err);
-		}
-	});
-}
-
-startingPrompt();
+liri_bot.switchCmd();
