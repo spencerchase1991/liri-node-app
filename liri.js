@@ -1,7 +1,5 @@
 require("dotenv").config();
 
-require("dotenv").config();
-
 var keys = require("./keys.js");
 
 var inquirer = require("inquirer");
@@ -40,6 +38,8 @@ function startingPrompt() {
 		}
 	});
 }
+
+console.log("do what it says")
 
 function confirmationPrompt() {
 	inquirer.prompt([
