@@ -28,7 +28,8 @@ This will output the following information to your terminal/bash window:
   - Title of the movie.
   - Year the movie came out.
   
-If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.'
+  ![move-this](https://user-images.githubusercontent.com/47365435/57953266-d6810b00-78ac-11e9-8c5f-b44bd89723a9.PNG)
+  
 
 #### Do What It Says
 
