@@ -205,8 +205,8 @@ function search(type, value) {
 				var showData = [
 					"Title: " + axiosResponse.data.Title,
 					"Release Year: " + axiosResponse.data.Year,
-					"IMDB Rating: " + axiosResponse.data.Ratings[0].Value,
-					"Rotten Tomatoes Rating: " + axiosResponse.data.Ratings[1].Value,
+					"IMDB Rating: " + axiosResponse.data.Ratings[0].value,
+					"Rotten Tomatoes Rating: " + axiosResponse.data.Ratings[1].value,
 					"Country Produced: " + axiosResponse.data.Country,
 					"Language : " + axiosResponse.data.Language,
 					"Actors: " + axiosResponse.data.Actors,
