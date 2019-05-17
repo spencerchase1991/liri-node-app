@@ -55,6 +55,6 @@ Right now it will run spotify-this-song for "I Want It That Way".
 
 #### Logged Data
 
-Output data to a .txt file, without overwriting.
+Append data to a .txt file.
 
 ![log](https://user-images.githubusercontent.com/47365435/57953894-9c186d80-78ae-11e9-85bd-8f05bf49630e.PNG)
